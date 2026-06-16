@@ -1,14 +1,36 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..schemas import SubmissionCreate, SubmissionOut
 from ..models import Submission, Question, TestCase, ExamQuestion
 from ..auth import require_candidate, require_admin
 from ..db import get_db
-from ..judge0 import evaluate_submission
+from ..judge0 import evaluate_submission, run_judge0_submission
 
 router = APIRouter(prefix="/submit", tags=["submissions"])
+
+class CodeRunRequest(BaseModel):
+    source_code: str
+    language_id: int
+    stdin: str = ""
+
+@router.post("/run")
+async def run_code(payload: CodeRunRequest, user = Depends(require_candidate)):
+    """Execute code immediately without saving submission"""
+    result = await run_judge0_submission(
+        source_code=payload.source_code,
+        stdin=payload.stdin,
+        language_id=payload.language_id
+    )
+    return {
+        "status": result.get("status", {}).get("description"),
+        "stdout": result.get("stdout", ""),
+        "stderr": result.get("stderr", ""),
+        "compile_output": result.get("compile_output", ""),
+        "exit_code": result.get("exit_code"),
+    }
 
 @router.post("/", response_model=SubmissionOut)
 async def submit_code(payload: SubmissionCreate, db: AsyncSession = Depends(get_db), user = Depends(require_candidate)):
