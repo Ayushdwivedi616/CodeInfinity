@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from pydantic import BaseSettings, AnyUrl
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str
