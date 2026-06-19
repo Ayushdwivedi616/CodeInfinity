@@ -9,7 +9,7 @@ from ..db import get_db
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
-@router.post("/", response_model=QuestionOut)
+@router.post("", response_model=QuestionOut)
 async def create_question(payload: QuestionCreate, db: AsyncSession = Depends(get_db), user = Depends(require_admin)):
     assessment_query = await db.execute(select(Assessment).where(Assessment.id == payload.assessment_id))
     assessment = assessment_query.scalar_one_or_none()
@@ -43,7 +43,7 @@ async def create_question(payload: QuestionCreate, db: AsyncSession = Depends(ge
     await db.refresh(question)
     return question
 
-@router.get("/", response_model=List[QuestionOut])
+@router.get("", response_model=List[QuestionOut])
 async def list_questions(assessment_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
     stmt = select(Question)
     if assessment_id is not None:

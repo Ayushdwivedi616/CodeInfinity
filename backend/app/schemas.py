@@ -25,6 +25,7 @@ class AssessmentCreate(BaseModel):
     title: str
     description: Optional[str] = None
     duration_minutes: int
+    question_ids: List[int] = []
 
 class AssessmentOut(BaseModel):
     id: int

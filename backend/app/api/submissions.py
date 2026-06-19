@@ -7,25 +7,27 @@ from ..schemas import SubmissionCreate, SubmissionOut, SubmissionResultOut
 from ..models import Submission, Question, TestCase, Attempt, SubmissionResult
 from ..auth import require_candidate, require_admin
 from ..db import get_db
-from ..judge0 import evaluate_submission
+from ..judge0 import evaluate_submission, run_judge0_submission
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 @router.post("/run")
 async def run_code(payload: dict):
-    # Simple run endpoint for frontend demo; replace with Judge0 logic when available.
     stdin = payload.get("stdin", "")
     source_code = payload.get("source_code", "")
     language = payload.get("language", "cpp")
+    result = await run_judge0_submission(source_code=source_code, stdin=stdin, language_id=language)
+
     return {
-        "stdout": stdin,
-        "stderr": "",
-        "compile_output": "",
+        "stdout": result.get("stdout", ""),
+        "stderr": result.get("stderr", ""),
+        "compile_output": result.get("compile_output", ""),
         "language": language,
         "source_code": source_code,
+        "status": result.get("status", {}).get("description"),
     }
 
-@router.post("/", response_model=SubmissionOut)
+@router.post("", response_model=SubmissionOut)
 async def submit_code(payload: SubmissionCreate, db: AsyncSession = Depends(get_db), user = Depends(require_candidate)):
     attempt_query = await db.execute(select(Attempt).where(Attempt.id == payload.attempt_id))
     attempt = attempt_query.scalar_one_or_none()

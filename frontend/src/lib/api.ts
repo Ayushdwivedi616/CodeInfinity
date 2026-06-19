@@ -50,7 +50,7 @@ export async function getAssessment(assessmentId: number) {
   return api.get(`/assessments/${assessmentId}`)
 }
 
-export async function createAssessment(payload: { title: string; description?: string; duration_minutes: number }) {
+export async function createAssessment(payload: { title: string; description?: string; duration_minutes: number; question_ids?: number[] }) {
   return api.post('/assessments', payload)
 }
 

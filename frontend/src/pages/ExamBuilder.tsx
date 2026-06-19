@@ -11,6 +11,7 @@ export default function ExamBuilder() {
   const [description, setDescription] = useState('')
   const [duration, setDuration] = useState('60')
   const [questions, setQuestions] = useState<QuestionSummary[]>([])
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([])
   const [questionsLoading, setQuestionsLoading] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -43,17 +44,24 @@ export default function ExamBuilder() {
       return
     }
 
+    if (selectedQuestionIds.length === 0) {
+      setError('Please select at least one question for the exam.')
+      return
+    }
+
     setSaving(true)
     try {
       await createAssessment({
         title: title.trim(),
         description: description.trim(),
         duration_minutes: minutes,
+        question_ids: selectedQuestionIds,
       })
       setStatus('Assessment created successfully.')
       setTitle('')
       setDescription('')
       setDuration('60')
+      setSelectedQuestionIds([])
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Failed to create assessment')
     } finally {
@@ -116,7 +124,18 @@ export default function ExamBuilder() {
             ) : (
               questions.map((question) => (
                 <label key={question.id} className="flex items-center gap-3 rounded-3xl border border-slate-800 bg-slate-900 px-4 py-3">
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-cyan-500" disabled />
+                  <input
+                    type="checkbox"
+                    checked={selectedQuestionIds.includes(question.id)}
+                    onChange={() =>
+                      setSelectedQuestionIds((current) =>
+                        current.includes(question.id)
+                          ? current.filter((id) => id !== question.id)
+                          : [...current, question.id],
+                      )
+                    }
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-cyan-500"
+                  />
                   <span className="text-slate-300">{question.title}</span>
                 </label>
               ))
