@@ -24,7 +24,7 @@ export default function LandingPage() {
             title="Admin"
             description="Log in to build exams, manage questions, and review candidate progress."
             cta="Go to Admin"
-            href="/admin"
+            href="/login"
             accent="bg-cyan-500/15 text-cyan-200"
           />
         </div>
@@ -33,7 +33,7 @@ export default function LandingPage() {
             title="Candidate"
             description="Access exams, run code in the browser, and track your submission history."
             cta="Take a Test"
-            href="/candidate"
+            href="/login"
             accent="bg-slate-700/80 text-slate-100"
           />
         </div>

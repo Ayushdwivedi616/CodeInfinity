@@ -17,6 +17,31 @@ export function setAuthToken(token: string | null) {
   }
 }
 
+export function initializeAuth() {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    setAuthToken(token)
+  }
+  return token
+}
+
+export function logout() {
+  localStorage.removeItem('auth_token')
+  setAuthToken(null)
+}
+
+export async function login(payload: { username: string; password: string }) {
+  const data = new URLSearchParams()
+  data.append('username', payload.username)
+  data.append('password', payload.password)
+
+  return api.post('/login', data, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  })
+}
+
 export async function getAssessments() {
   return api.get('/assessments')
 }

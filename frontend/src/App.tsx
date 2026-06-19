@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Route, Routes, NavLink } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import AdminDashboard from './pages/AdminDashboard'
@@ -7,11 +8,17 @@ import Submissions from './pages/Submissions'
 import CandidateExams from './pages/CandidateExams'
 import ExamRoom from './pages/ExamRoom'
 import History from './pages/History'
+import Login from './pages/Login'
+import { initializeAuth } from './lib/api'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm font-medium transition ${isActive ? 'text-white' : 'text-slate-400 hover:text-white'}`
 
 export default function App() {
+  useEffect(() => {
+    initializeAuth()
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-30">
@@ -29,6 +36,9 @@ export default function App() {
             <NavLink to="/candidate" className={navLinkClass}>
               Candidate
             </NavLink>
+            <NavLink to="/login" className={navLinkClass}>
+              Login
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -42,6 +52,7 @@ export default function App() {
           <Route path="/candidate" element={<CandidateExams />} />
           <Route path="/candidate/room/:examId" element={<ExamRoom />} />
           <Route path="/candidate/history" element={<History />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </main>
     </div>

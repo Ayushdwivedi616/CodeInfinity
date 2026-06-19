@@ -10,7 +10,7 @@ from .config import settings
 from .models import User
 from .db import get_db
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 async def verify_password(plain_password: str, hashed_password: str) -> bool:
