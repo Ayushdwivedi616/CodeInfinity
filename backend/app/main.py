@@ -4,6 +4,7 @@ from .api import auth as auth_router
 from .api import questions as questions_router
 from .api import exams as exams_router
 from .api import submissions as submissions_router
+from .api import attempts as attempts_router
 from .db import engine
 from .models import Base
 
@@ -21,6 +22,7 @@ app.include_router(auth_router.router)
 app.include_router(questions_router.router)
 app.include_router(exams_router.router)
 app.include_router(submissions_router.router)
+app.include_router(attempts_router.router)
 
 @app.on_event("startup")
 async def startup_event() -> None:

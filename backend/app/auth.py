@@ -1,10 +1,9 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from typing import Annotated
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .config import settings
@@ -34,9 +33,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     )
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        user_id: int = int(payload.get("sub"))
+        user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
+        user_id = int(user_id)
     except (JWTError, ValueError):
         raise credentials_exception
     query = await db.execute(select(User).where(User.id == user_id))
@@ -45,15 +45,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         raise credentials_exception
     return user
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    return current_user
-
 async def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required")
+    if current_user.role.lower() != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
 async def require_candidate(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != "candidate":
-        raise HTTPException(status_code=403, detail="Candidate privileges required")
+    if current_user.role.lower() != "candidate":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Candidate privileges required")
     return current_user
