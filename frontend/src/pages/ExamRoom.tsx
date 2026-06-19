@@ -171,7 +171,7 @@ export default function ExamRoom() {
           </div>
           <div className="rounded-3xl bg-slate-900 px-5 py-4 text-sm text-slate-300">
             <p>Time Remaining</p>
-            <p className="mt-1 text-2xl font-semibold text-white">52:15</p>
+            <p className="mt-1 text-2xl font-semibold text-white">{selectedQuestion ? 'Live exam' : 'Loading...'}</p>
           </div>
         </div>
       </div>

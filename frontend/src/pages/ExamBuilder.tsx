@@ -1,13 +1,36 @@
-import { FormEvent, useState } from 'react'
-import { createAssessment } from '../lib/api'
+import { FormEvent, useEffect, useState } from 'react'
+import { createAssessment, getQuestions } from '../lib/api'
+
+interface QuestionSummary {
+  id: number
+  title: string
+}
 
 export default function ExamBuilder() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [duration, setDuration] = useState('60')
+  const [questions, setQuestions] = useState<QuestionSummary[]>([])
+  const [questionsLoading, setQuestionsLoading] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const loadQuestions = async () => {
+      setQuestionsLoading(true)
+      try {
+        const response = await getQuestions()
+        setQuestions(response.data)
+      } catch (err: any) {
+        setError(err.response?.data?.detail || err.message || 'Failed to load questions')
+      } finally {
+        setQuestionsLoading(false)
+      }
+    }
+
+    loadQuestions()
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -83,14 +106,21 @@ export default function ExamBuilder() {
           />
         </label>
         <div className="rounded-3xl border border-slate-800 bg-slate-950 p-6">
-          <p className="text-sm font-semibold text-white">Select questions</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-white">Question bank</p>
+            {questionsLoading && <p className="text-xs text-slate-400">Loading questions...</p>}
+          </div>
           <div className="mt-5 grid gap-4">
-            {["Prime checker", "Array rotation", "Path finder"].map((item) => (
-              <label key={item} className="flex items-center gap-3 rounded-3xl border border-slate-800 bg-slate-900 px-4 py-3">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-cyan-500" />
-                <span className="text-slate-300">{item}</span>
-              </label>
-            ))}
+            {questions.length === 0 ? (
+              <p className="text-slate-400">No questions available yet. Create questions first.</p>
+            ) : (
+              questions.map((question) => (
+                <label key={question.id} className="flex items-center gap-3 rounded-3xl border border-slate-800 bg-slate-900 px-4 py-3">
+                  <input type="checkbox" className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-cyan-500" disabled />
+                  <span className="text-slate-300">{question.title}</span>
+                </label>
+              ))
+            )}
           </div>
         </div>
         {status && <div className="rounded-3xl bg-emerald-950 p-4 text-emerald-300">{status}</div>}
