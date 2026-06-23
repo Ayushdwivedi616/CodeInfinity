@@ -8,6 +8,7 @@ interface Assessment {
   title: string
   description?: string
   duration_minutes: number
+  question_count: number
 }
 
 export default function CandidateExams() {
@@ -54,7 +55,7 @@ export default function CandidateExams() {
               key={assessment.id}
               title={assessment.title}
               description={assessment.description || 'No description provided.'}
-              questions={0}
+              questions={assessment.question_count}
               href={`/candidate/room/${assessment.id}`}
             />
           ))}

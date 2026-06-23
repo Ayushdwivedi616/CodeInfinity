@@ -34,6 +34,7 @@ class AssessmentOut(BaseModel):
     duration_minutes: int
     created_by: int
     created_at: datetime
+    question_count: int = 0
 
     class Config:
         orm_mode = True
