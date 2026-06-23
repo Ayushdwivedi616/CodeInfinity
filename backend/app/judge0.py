@@ -74,12 +74,15 @@ async def evaluate_submission(source_code: str, test_cases: list[TestCase], lang
         })
 
         results.append({
+            "test_case_id": case.id,
             "input": case.input_data,
             "expected_output": case.expected_output,
             "stdout": output,
+            "output": output,
             "stderr": stderr,
             "compile_output": compile_output,
             "status": status_desc,
+            "execution_time": float(result.get("time") or result.get("cpu_time") or 0.0),
             "passed": passed,
         })
     return score, total, results

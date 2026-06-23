@@ -89,7 +89,7 @@ async def submit_code(payload: SubmissionCreate, db: AsyncSession = Depends(get_
         SubmissionResult(
             submission_id=submission.id,
             test_case_id=r["test_case_id"],
-            output_produced=r.get("output", ""),
+            output_produced=r.get("stdout", r.get("output", "")),
             passed=r["passed"],
             execution_time=r.get("execution_time", 0.0),
         )
