@@ -89,6 +89,9 @@ class AttemptOut(BaseModel):
 class SubmissionResultOut(BaseModel):
     test_case_id: int
     output_produced: Optional[str]
+    stderr: Optional[str] = None
+    compile_output: Optional[str] = None
+    status: Optional[str] = None
     passed: bool
     execution_time: float
 

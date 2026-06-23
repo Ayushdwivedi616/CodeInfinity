@@ -1,5 +1,7 @@
 from typing import List
 from datetime import datetime
+import logging
+import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,8 +9,9 @@ from ..schemas import SubmissionCreate, SubmissionOut, SubmissionResultOut
 from ..models import Submission, Question, TestCase, Attempt, SubmissionResult
 from ..auth import require_candidate, require_admin
 from ..db import get_db
-from ..judge0 import evaluate_submission, run_judge0_submission
+from ..judge0 import evaluate_submission, run_judge0_submission, resolve_language_id
 
+logger = logging.getLogger('submissions_api')
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 @router.post("/run")
@@ -16,16 +19,41 @@ async def run_code(payload: dict):
     stdin = payload.get("stdin", "")
     source_code = payload.get("source_code", "")
     language = payload.get("language", "cpp")
-    result = await run_judge0_submission(source_code=source_code, stdin=stdin, language_id=language)
+    language_id = resolve_language_id(language)
+    logger.info('Run code request', extra={'language': language, 'language_id': language_id})
 
-    return {
-        "stdout": result.get("stdout", ""),
-        "stderr": result.get("stderr", ""),
-        "compile_output": result.get("compile_output", ""),
-        "language": language,
-        "source_code": source_code,
-        "status": result.get("status", {}).get("description"),
-    }
+    try:
+        result = await run_judge0_submission(source_code=source_code, stdin=stdin, language_id=language_id)
+        status_obj = result.get("status") or {}
+        status_desc = status_obj.get("description", "")
+        return {
+            "stdout": result.get("stdout") or "",
+            "stderr": result.get("stderr") or "",
+            "compile_output": result.get("compile_output") or "",
+            "language": language,
+            "source_code": source_code,
+            "status": status_desc,
+            "success": status_desc.lower() == "accepted",
+            "debug": {
+                "requested_language": language,
+                "resolved_language_id": language_id,
+                "judge0_status_id": status_obj.get("id"),
+                "judge0_status": status_desc,
+                "token_used": bool(result.get("token")),
+            },
+        }
+    except Exception as exc:
+        logger.error('Run code failed', exc_info=True, extra={'language': language})
+        return {
+            "stdout": "",
+            "stderr": "",
+            "compile_output": "",
+            "language": language,
+            "source_code": source_code,
+            "status": "error",
+            "error": str(exc),
+            "debug": traceback.format_exc(),
+        }
 
 @router.post("", response_model=SubmissionOut)
 async def submit_code(payload: SubmissionCreate, db: AsyncSession = Depends(get_db), user = Depends(require_candidate)):

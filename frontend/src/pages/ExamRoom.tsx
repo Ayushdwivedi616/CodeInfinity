@@ -3,26 +3,52 @@ import { useParams } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
 import { getQuestions, startAttempt, runSubmission, submitSubmission } from '../lib/api'
 
-const LANGUAGES = {
-  54: { name: 'C++ (GNU 14)', extension: 'cpp', apiName: 'cpp', template: `#include <bits/stdc++.h>
+type LanguageConfig = {
+  name: string
+  extension: string
+  apiName: string
+  template: string
+}
+
+const LANGUAGES: Record<number, LanguageConfig> = {
+  54: {
+    name: 'C++ (GNU 14)',
+    extension: 'cpp',
+    apiName: 'cpp',
+    template: `#include <bits/stdc++.h>
 using namespace std;
 int main() {
     int n;
     if (!(cin >> n)) return 0;
     cout << n;
     return 0;
-}` },
-  71: { name: 'Python 3.11', extension: 'python', apiName: 'python', template: `n = int(input())
-print(n)` },
-  62: { name: 'Java (OpenJDK 13)', extension: 'java', apiName: 'java', template: `import java.util.Scanner;
+}`,
+  },
+  71: {
+    name: 'Python 3.11',
+    extension: 'python',
+    apiName: 'python',
+    template: `n = int(input())
+print(n)`,
+  },
+  62: {
+    name: 'Java (OpenJDK 13)',
+    extension: 'java',
+    apiName: 'java',
+    template: `import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();
         System.out.println(n);
     }
-}` },
-  63: { name: 'JavaScript (Node.js)', extension: 'javascript', apiName: 'javascript', template: `const readline = require('readline');
+}`,
+  },
+  63: {
+    name: 'JavaScript (Node.js)',
+    extension: 'javascript',
+    apiName: 'javascript',
+    template: `const readline = require('readline');
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -30,7 +56,8 @@ const rl = readline.createInterface({
 rl.question('', (n) => {
     console.log(n);
     rl.close();
-});` }
+});`,
+  },
 }
 
 const LANGUAGE_IDS = Object.keys(LANGUAGES).map(Number)
@@ -56,6 +83,7 @@ export default function ExamRoom() {
   const [output, setOutput] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [lastResult, setLastResult] = useState<string>('')
+  const [runDebug, setRunDebug] = useState<string>('')
   const [questions, setQuestions] = useState<QuestionItem[]>([])
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
   const [attemptId, setAttemptId] = useState<number | null>(null)
@@ -115,13 +143,24 @@ export default function ExamRoom() {
         stdin: testInput,
       })
       setOutput(response.data.stdout || '')
-      if (response.data.stderr) {
-        setError(response.data.stderr)
+      setRunDebug(JSON.stringify(response.data.debug || response.data, null, 2))
+
+      const compileError = response.data.compile_output || response.data.stderr
+      if (compileError) {
+        setError(compileError)
       }
-      if (response.data.compile_output) {
-        setError((prev) => prev || response.data.compile_output)
+
+      if (response.data.error) {
+        setError((prev) => prev ? `${prev}\n${response.data.error}` : response.data.error)
       }
-      setLastResult('Ran successfully')
+
+      if (response.data.success) {
+        setLastResult('Accepted')
+      } else if (response.data.status) {
+        setLastResult(`Result: ${response.data.status}`)
+      } else {
+        setLastResult('Ran successfully')
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Error running code')
       setLastResult('Error')
@@ -294,6 +333,13 @@ export default function ExamRoom() {
               <div className="mt-4 rounded-3xl bg-red-950 p-4">
                 <p className="text-sm uppercase tracking-[0.25em] text-red-400">Error</p>
                 <pre className="mt-3 whitespace-pre-wrap text-sm text-red-300">{error}</pre>
+              </div>
+            )}
+
+            {runDebug && (
+              <div className="mt-4 rounded-3xl bg-slate-900 p-4">
+                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">Debug</p>
+                <pre className="mt-3 whitespace-pre-wrap text-sm text-slate-300">{runDebug}</pre>
               </div>
             )}
 
