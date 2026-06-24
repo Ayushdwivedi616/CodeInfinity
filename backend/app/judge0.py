@@ -23,7 +23,8 @@ def resolve_language_id(language: str | int = 54) -> int:
 
 async def run_judge0_submission(source_code: str, stdin: str, language_id: str | int = 54) -> dict:
     language_id = resolve_language_id(language_id)
-    create_url = f"{settings.judge0_base_url}/submissions?base64_encoded=false&wait=false"
+    print(f"Running submission with language_id={language_id}")
+    create_url = f"{settings.judge0_base_url}/submissions?base64_encoded=false&wait=true"
     headers = {"Content-Type": "application/json"}
     if settings.judge0_token:
         headers["X-Auth-Token"] = settings.judge0_token
@@ -50,7 +51,7 @@ async def run_judge0_submission(source_code: str, stdin: str, language_id: str |
             # If Judge0 returned the full result (wait=true), just return it
             logger.info('Judge0 returned immediate result', extra={'payload_keys': list(token_payload.keys())})
             return token_payload
-
+        print(f"Submission created with token={token}, polling for result...")
         get_url = f"{settings.judge0_base_url}/submissions/{token}?base64_encoded=false&fields=stdout,stderr,status_id,status,language_id,compile_output,time"
 
         deadline = time.time() + 15.0
@@ -114,6 +115,15 @@ async def evaluate_submission(source_code: str, test_cases: list[TestCase], lang
             'passed': passed,
         })
 
+        # determine compile_output mapping: prefer explicit compile_output, then stderr for compile issues, else stdout
+        compile_output_val = compile_output
+        if not compile_output_val:
+            status_lower = (status_desc or "").lower()
+            if "compil" in status_lower or "compile" in status_lower:
+                compile_output_val = stderr or ""
+            else:
+                compile_output_val = output or ""
+
         results.append({
             "test_case_id": case.id,
             "input": case.input_data,
@@ -121,7 +131,7 @@ async def evaluate_submission(source_code: str, test_cases: list[TestCase], lang
             "stdout": output,
             "output": output,
             "stderr": stderr,
-            "compile_output": compile_output,
+            "compile_output": compile_output_val,
             "status": status_desc,
             "execution_time": float(result.get("time") or result.get("cpu_time") or 0.0),
             "passed": passed,

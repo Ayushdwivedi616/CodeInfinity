@@ -24,20 +24,41 @@ async def run_code(payload: dict):
 
     try:
         result = await run_judge0_submission(source_code=source_code, stdin=stdin, language_id=language_id)
-        status_obj = result.get("status") or {}
-        status_desc = status_obj.get("description", "")
+        # status may be a dict ({id, description}) or a scalar/status_id may be present
+        status_obj = result.get("status")
+        status_desc = ""
+        status_id = None
+        if isinstance(status_obj, dict):
+            status_desc = status_obj.get("description", "")
+            status_id = status_obj.get("id")
+        else:
+            # some responses include status_id separately
+            status_desc = result.get("status") or result.get("status_description") or ""
+            status_id = result.get("status_id")
+
+        # map compile_output: prefer explicit compile_output, otherwise use stderr for compile errors,
+        # otherwise fall back to stdout so UI shows the program output when appropriate
+        compile_output_val = result.get("compile_output")
+        if not compile_output_val:
+            # if status indicates compilation error, prefer stderr
+            status_lower = (status_desc or "").lower()
+            if "compil" in status_lower or "compile" in status_lower:
+                compile_output_val = result.get("stderr") or ""
+            else:
+                compile_output_val = result.get("stdout") or ""
+
         return {
             "stdout": result.get("stdout") or "",
             "stderr": result.get("stderr") or "",
-            "compile_output": result.get("compile_output") or "",
+            "compile_output": compile_output_val or "",
             "language": language,
             "source_code": source_code,
             "status": status_desc,
-            "success": status_desc.lower() == "accepted",
+            "success": (status_desc or "").lower() == "accepted",
             "debug": {
                 "requested_language": language,
                 "resolved_language_id": language_id,
-                "judge0_status_id": status_obj.get("id"),
+                "judge0_status_id": status_id,
                 "judge0_status": status_desc,
                 "token_used": bool(result.get("token")),
             },
