@@ -1,6 +1,8 @@
 from __future__ import annotations
 import logging
 import httpx
+import asyncio
+import time
 from .config import settings
 from .models import TestCase
 
@@ -21,7 +23,7 @@ def resolve_language_id(language: str | int = 54) -> int:
 
 async def run_judge0_submission(source_code: str, stdin: str, language_id: str | int = 54) -> dict:
     language_id = resolve_language_id(language_id)
-    url = f"{settings.judge0_base_url}/submissions?base64_encoded=false&wait=true"
+    create_url = f"{settings.judge0_base_url}/submissions?base64_encoded=false&wait=false"
     headers = {"Content-Type": "application/json"}
     if settings.judge0_token:
         headers["X-Auth-Token"] = settings.judge0_token
@@ -32,18 +34,53 @@ async def run_judge0_submission(source_code: str, stdin: str, language_id: str |
         "cpu_time_limit": 2,
         "memory_limit": 128000,
     }
+
     async with httpx.AsyncClient(timeout=20.0) as client:
-        logger.info('Sending submission to Judge0', extra={'language_id': language_id, 'stdin': stdin})
-        response = await client.post(url, json=payload, headers=headers)
+        logger.info('Creating submission on Judge0', extra={'language_id': language_id})
+        resp = await client.post(create_url, json=payload, headers=headers)
         try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            logger.exception('Judge0 request failed with HTTP error')
+            resp.raise_for_status()
+        except httpx.HTTPStatusError:
+            logger.exception('Judge0 create submission failed')
             raise
 
-        result = response.json()
-        logger.info('Judge0 response received', extra={'status': result.get('status', {}), 'stderr': bool(result.get('stderr')), 'compile_output': bool(result.get('compile_output'))})
-        return result
+        token_payload = resp.json()
+        token = token_payload.get('token') or token_payload.get('token_id')
+        if not token:
+            # If Judge0 returned the full result (wait=true), just return it
+            logger.info('Judge0 returned immediate result', extra={'payload_keys': list(token_payload.keys())})
+            return token_payload
+
+        get_url = f"{settings.judge0_base_url}/submissions/{token}?base64_encoded=false&fields=stdout,stderr,status_id,status,language_id,compile_output,time"
+
+        deadline = time.time() + 15.0
+        while True:
+            r = await client.get(get_url, headers=headers)
+            try:
+                r.raise_for_status()
+            except httpx.HTTPStatusError:
+                logger.exception('Judge0 fetch result failed')
+                raise
+
+            result = r.json()
+            # status may be nested under 'status' or present as 'status_id'
+            status_obj = result.get('status') or {}
+            status_id = status_obj.get('id') if isinstance(status_obj, dict) else None
+            if status_id is None:
+                status_id = result.get('status_id')
+
+            logger.debug('Polled Judge0 status', extra={'token': token, 'status_id': status_id})
+
+            # status_id: 1 = In Queue, 2 = Processing. Wait until it's no longer in those states.
+            if status_id not in (1, 2):
+                logger.info('Judge0 final result', extra={'token': token, 'status_id': status_id})
+                return result
+
+            if time.time() > deadline:
+                logger.warning('Judge0 poll timeout, returning last known result', extra={'token': token})
+                return result
+
+            await asyncio.sleep(0.5)
 
 async def evaluate_submission(source_code: str, test_cases: list[TestCase], language_id: str | int = 54) -> tuple[int, int, list[dict]]:
     language_id = resolve_language_id(language_id)
@@ -55,10 +92,14 @@ async def evaluate_submission(source_code: str, test_cases: list[TestCase], lang
         output = result.get("stdout") or ""
         stderr = result.get("stderr") or ""
         compile_output = result.get("compile_output") or ""
-        status_desc = result.get("status", {}).get("description")
+        # prefer nested status description if present
+        status_desc = None
+        if isinstance(result.get('status'), dict):
+            status_desc = result['status'].get('description')
+        status_desc = status_desc or result.get('status_description') or None
 
         normalized_output = output.strip().replace("\r\n", "\n")
-        expected = case.expected_output.strip().replace("\r\n", "\n")
+        expected = (case.expected_output or "").strip().replace("\r\n", "\n")
         passed = normalized_output == expected
         if passed:
             score += 1

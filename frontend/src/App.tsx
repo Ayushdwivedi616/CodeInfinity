@@ -41,7 +41,7 @@ export default function App() {
               <span className="text-xl font-semibold text-white">Code Infinity</span>
             </div>
             <nav className="flex items-center gap-6">
-              <NavLink to="/login" className={navLinkClass}>
+              <NavLink to="/" className={navLinkClass}>
                 Login
               </NavLink>
             </nav>
@@ -49,8 +49,8 @@ export default function App() {
         </header>
         <main className="mx-auto max-w-7xl px-6 py-10">
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Login />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
@@ -65,7 +65,7 @@ export default function App() {
             <span className="text-xl font-semibold text-white">Code Infinity</span>
           </div>
           <nav className="flex items-center gap-6">
-            <NavLink to="/" className={navLinkClass} end>
+            <NavLink to="/home" className={navLinkClass} end>
               Home
             </NavLink>
             <NavLink to="/admin" className={navLinkClass}>
@@ -74,7 +74,7 @@ export default function App() {
             <NavLink to="/candidate" className={navLinkClass}>
               Candidate
             </NavLink>
-            <NavLink to="/login" className={navLinkClass}>
+            <NavLink to="/" className={navLinkClass}>
               Login
             </NavLink>
           </nav>
@@ -82,8 +82,8 @@ export default function App() {
       </header>
       <main className="mx-auto max-w-7xl px-6 py-10">
         <Routes>
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/home" element={<LandingPage />} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/questions" element={<ProtectedRoute><QuestionBuilder /></ProtectedRoute>} />
           <Route path="/admin/exams" element={<ProtectedRoute><ExamBuilder /></ProtectedRoute>} />
