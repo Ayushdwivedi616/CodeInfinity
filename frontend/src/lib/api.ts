@@ -15,6 +15,7 @@ export function setAuthToken(token: string | null) {
   } else {
     delete api.defaults.headers.common.Authorization
   }
+  window.dispatchEvent(new Event('authChange'))
 }
 
 export function initializeAuth() {
