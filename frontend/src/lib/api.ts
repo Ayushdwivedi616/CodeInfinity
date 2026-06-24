@@ -25,6 +25,14 @@ export function initializeAuth() {
   return token
 }
 
+export function getAuthToken() {
+  return localStorage.getItem('auth_token')
+}
+
+export function isAuthenticated() {
+  return Boolean(getAuthToken())
+}
+
 export function logout() {
   localStorage.removeItem('auth_token')
   setAuthToken(null)
