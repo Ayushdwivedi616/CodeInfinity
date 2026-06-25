@@ -51,7 +51,7 @@ async def run_code(payload: dict):
         return {
             "stdout": "",
             "stderr": result.get("stderr") or "",
-            "compile_output": result.get("compile_output") or output_val,
+            "compile_output": compile_output_val or output_val,
             "language": language,
             "source_code": source_code,
             "status": status_desc,
