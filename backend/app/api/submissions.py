@@ -47,10 +47,11 @@ async def run_code(payload: dict):
             else:
                 compile_output_val = result.get("stdout") or ""
 
+        output_val = result.get("stdout") or ""
         return {
-            "stdout": result.get("stdout") or "",
+            "stdout": "",
             "stderr": result.get("stderr") or "",
-            "compile_output": compile_output_val or "",
+            "compile_output": result.get("compile_output") or output_val,
             "language": language,
             "source_code": source_code,
             "status": status_desc,

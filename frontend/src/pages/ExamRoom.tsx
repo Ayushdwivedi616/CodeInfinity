@@ -83,7 +83,6 @@ export default function ExamRoom() {
   const [output, setOutput] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [lastResult, setLastResult] = useState<string>('')
-  const [runDebug, setRunDebug] = useState<string>('')
   const [questions, setQuestions] = useState<QuestionItem[]>([])
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
   const [attemptId, setAttemptId] = useState<number | null>(null)
@@ -143,7 +142,6 @@ export default function ExamRoom() {
         stdin: testInput,
       })
       setOutput(response.data.stdout || '')
-      setRunDebug(JSON.stringify(response.data.debug || response.data, null, 2))
 
       const compileError = response.data.compile_output || response.data.stderr
       if (compileError) {
@@ -333,13 +331,6 @@ export default function ExamRoom() {
               <div className="mt-4 rounded-3xl bg-red-950 p-4">
                 <p className="text-sm uppercase tracking-[0.25em] text-red-400">Error</p>
                 <pre className="mt-3 whitespace-pre-wrap text-sm text-red-300">{error}</pre>
-              </div>
-            )}
-
-            {runDebug && (
-              <div className="mt-4 rounded-3xl bg-slate-900 p-4">
-                <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">Debug</p>
-                <pre className="mt-3 whitespace-pre-wrap text-sm text-slate-300">{runDebug}</pre>
               </div>
             )}
 
