@@ -92,3 +92,15 @@ export async function getSubmissionHistory() {
 export async function getAllSubmissions() {
   return api.get('/submissions/all')
 }
+export function getAuthToken(): string | null {
+  return localStorage.getItem('auth_token')
+}
+
+export function getUserRoleFromToken(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.role || null
+  } catch {
+    return null
+  }
+}

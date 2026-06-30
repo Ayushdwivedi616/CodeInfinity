@@ -9,6 +9,7 @@ import CandidateExams from './pages/CandidateExams'
 import ExamRoom from './pages/ExamRoom'
 import History from './pages/History'
 import Login from './pages/Login'
+import ProtectedRoute from './components/ProtectedRoute'
 import { initializeAuth } from './lib/api'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -45,13 +46,62 @@ export default function App() {
       <main className="mx-auto max-w-7xl px-6 py-10">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/questions" element={<QuestionBuilder />} />
-          <Route path="/admin/exams" element={<ExamBuilder />} />
-          <Route path="/admin/submissions" element={<Submissions />} />
-          <Route path="/candidate" element={<CandidateExams />} />
-          <Route path="/candidate/room/:examId" element={<ExamRoom />} />
-          <Route path="/candidate/history" element={<History />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/questions"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <QuestionBuilder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/exams"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ExamBuilder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/submissions"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Submissions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/candidate"
+            element={
+              <ProtectedRoute requiredRole="candidate">
+                <CandidateExams />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/candidate/room/:examId"
+            element={
+              <ProtectedRoute requiredRole="candidate">
+                <ExamRoom />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/candidate/history"
+            element={
+              <ProtectedRoute requiredRole="candidate">
+                <History />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
         </Routes>
       </main>

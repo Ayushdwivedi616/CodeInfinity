@@ -7,6 +7,30 @@
   </head>
   <body class="bg-slate-950 text-slate-100">
     <div id="root"></div>
+
+    <!-- Fallback: show this message if the module script doesn't run -->
+    <div id="js-fallback" style="display:none;padding:24px;font-family:system-ui,Segoe UI,Roboto,Arial;">
+      <h2 style="color:#b91c1c">Application failed to load</h2>
+      <p>JavaScript bundle did not execute. Open DevTools Console to see errors.</p>
+    </div>
+    <script>
+      // If the app doesn't set window.__app_loaded to true within 3s, show the fallback
+      window.__app_loaded = false;
+      setTimeout(function () {
+        if (!window.__app_loaded) {
+          document.getElementById('js-fallback').style.display = 'block'
+          // Automatically redirect to /login after a short delay to recover from failed init
+          setTimeout(function () {
+            try {
+              window.location.href = '/login'
+            } catch (e) {
+              // ignore
+            }
+          }, 4000)
+        }
+      }, 3000)
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

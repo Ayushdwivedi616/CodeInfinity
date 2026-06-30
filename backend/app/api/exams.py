@@ -51,7 +51,14 @@ async def list_assessments(db: AsyncSession = Depends(get_db)):
     stmt = select(
         Assessment,
         func.count(Question.id).label('question_count')
-    ).outerjoin(Question, Question.assessment_id == Assessment.id).group_by(Assessment.id)
+    ).outerjoin(Question, Question.assessment_id == Assessment.id).group_by(
+    Assessment.id,
+    Assessment.title,
+    Assessment.description,
+    Assessment.duration_minutes,
+    Assessment.created_by,
+    Assessment.created_at,
+)
     query = await db.execute(stmt)
     rows = query.all()
     return [

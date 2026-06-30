@@ -20,12 +20,28 @@ async def run_code(payload: dict):
     source_code = payload.get("source_code", "")
     language = payload.get("language", "cpp")
     language_id = resolve_language_id(language)
-    logger.info('Run code request', extra={'language': language, 'language_id': language_id})
+
+    logger.info(
+        "Run code request",
+        extra={"language": language, "language_id": language_id},
+    )
 
     try:
-        result = await run_judge0_submission(source_code=source_code, stdin=stdin, language_id=language_id)
-        status_obj = result.get("status") or {}
-        status_desc = status_obj.get("description", "")
+        result = await run_judge0_submission(
+            source_code=source_code,
+            stdin=stdin,
+            language_id=language_id,
+        )
+
+        status_obj = result.get("status")
+
+        if isinstance(status_obj, str):
+            status_desc = status_obj
+            status_id = None
+        else:
+            status_desc = (status_obj or {}).get("description", "")
+            status_id = (status_obj or {}).get("id")
+
         return {
             "stdout": result.get("stdout") or "",
             "stderr": result.get("stderr") or "",
@@ -37,13 +53,19 @@ async def run_code(payload: dict):
             "debug": {
                 "requested_language": language,
                 "resolved_language_id": language_id,
-                "judge0_status_id": status_obj.get("id"),
+                "judge0_status_id": status_id,
                 "judge0_status": status_desc,
                 "token_used": bool(result.get("token")),
             },
         }
+
     except Exception as exc:
-        logger.error('Run code failed', exc_info=True, extra={'language': language})
+        logger.error(
+            "Run code failed",
+            exc_info=True,
+            extra={"language": language},
+        )
+
         return {
             "stdout": "",
             "stderr": "",
@@ -54,6 +76,7 @@ async def run_code(payload: dict):
             "error": str(exc),
             "debug": traceback.format_exc(),
         }
+         
 
 @router.post("", response_model=SubmissionOut)
 async def submit_code(payload: SubmissionCreate, db: AsyncSession = Depends(get_db), user = Depends(require_candidate)):

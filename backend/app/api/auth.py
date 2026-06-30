@@ -6,6 +6,7 @@ from ..schemas import Token, UserCreate, UserOut
 from ..models import User
 from ..auth import verify_password, get_password_hash, create_access_token
 from ..db import get_db
+from ..auth import get_current_user
 
 router = APIRouter()
 
@@ -29,3 +30,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect credentials")
     token = await create_access_token({"sub": str(user.id), "role": user.role})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get('/me', response_model=UserOut)
+async def me(current_user: User = Depends(get_current_user)):
+    return current_user

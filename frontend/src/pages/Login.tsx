@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login, setAuthToken } from '../lib/api'
+import { login, setAuthToken, getUserRoleFromToken } from '../lib/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -19,7 +19,10 @@ export default function Login() {
       const token = response.data.access_token
       localStorage.setItem('auth_token', token)
       setAuthToken(token)
-      navigate('/admin')
+      const role = getUserRoleFromToken(token)
+      if (role && role.toLowerCase() === 'admin') navigate('/admin')
+      else if (role && role.toLowerCase() === 'candidate') navigate('/candidate')
+      else navigate('/')
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Login failed')
     } finally {
