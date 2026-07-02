@@ -68,7 +68,9 @@ export default function Submissions() {
                   <td className="px-6 py-5">#{submission.attempt_id}</td>
                   <td className="px-6 py-5">{submission.question_id}</td>
                   <td className="px-6 py-5 font-semibold text-white">{submission.score}</td>
-                  <td className="px-6 py-5">{new Date(submission.submitted_at).toLocaleString()}</td>
+                  <td className="px-6 py-5">{new Date(submission.submitted_at).toLocaleString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                  })}</td>
                 </tr>
               ))}
             </tbody>
