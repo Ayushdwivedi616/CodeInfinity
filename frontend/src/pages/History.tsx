@@ -70,7 +70,11 @@ export default function History() {
                 </div>
                 <div className="rounded-3xl bg-slate-900 p-4 text-slate-300">
                   <p className="text-sm">Submitted</p>
-                  <p className="mt-2 text-white">{new Date(submission.submitted_at).toLocaleString()}</p>
+                  <p className="mt-2 text-white">
+                    {new Date(submission.submitted_at).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                    })}
+                  </p>
                 </div>
               </div>
             </div>
